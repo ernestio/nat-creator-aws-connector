@@ -17,7 +17,7 @@ var (
 	ErrNetworkIDInvalid             = errors.New("Network id invalid")
 )
 
-// Event stores the network create data
+// Event stores the nat data
 type Event struct {
 	ID                     string `json:"id"`
 	DatacenterVPCID        string `json:"datacenter_vpc_id"`
@@ -50,6 +50,15 @@ func (ev *Event) Validate() error {
 	}
 
 	return nil
+}
+
+// Process the raw event
+func (ev *Event) Process(data []byte) error {
+	err := json.Unmarshal(data, &ev)
+	if err != nil {
+		nc.Publish("nat.create.aws.error", data)
+	}
+	return err
 }
 
 // Error the request
