@@ -30,6 +30,7 @@ type Event struct {
 	NatGatewayAWSID        string `json:"nat_gateway_aws_id"`
 	NatGatewayAllocationID string `json:"nat_gateway_allocation_id"`
 	NatGatewayAllocationIP string `json:"nat_gateway_allocation_ip"`
+	InternetGatewayID      string `json:"internet_gateway_id"`
 	ErrorMessage           string `json:"error,omitempty"`
 }
 

@@ -42,6 +42,58 @@ func eventHandler(m *nats.Msg) {
 	n.Complete()
 }
 
+func internetGatewayByVPCID(svc *ec2.EC2, id string) (*ec2.InternetGateway, error) {
+	f := []*ec2.Filter{
+		&ec2.Filter{
+			Name:   aws.String("vcp-id"),
+			Values: []*string{aws.String(id)},
+		},
+	}
+
+	req := ec2.DescribeInternetGatewaysInput{
+		Filters: f,
+	}
+
+	resp, err := svc.DescribeInternetGateways(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.InternetGateways) == 0 {
+		return nil, nil
+	}
+
+	return resp.InternetGateways[0], nil
+}
+
+func createInternetGateway(svc *ec2.EC2, id string) (string, error) {
+	ig, err := internetGatewayByVPCID(svc, id)
+	if err != nil {
+		return "", err
+	}
+
+	if ig != nil {
+		return *ig.InternetGatewayId, nil
+	}
+
+	resp, err := svc.CreateInternetGateway(nil)
+	if err != nil {
+		return "", err
+	}
+
+	req := ec2.AttachInternetGatewayInput{
+		InternetGatewayId: resp.InternetGateway.InternetGatewayId,
+		VpcId:             aws.String(id),
+	}
+
+	_, err = svc.AttachInternetGateway(&req)
+	if err != nil {
+		return "", err
+	}
+
+	return *resp.InternetGateway.InternetGatewayId, nil
+}
+
 func createNat(ev *Event) error {
 	creds := credentials.NewStaticCredentials(ev.DatacenterAccessKey, ev.DatacenterAccessToken, "")
 	svc := ec2.New(session.New(), &aws.Config{
@@ -58,11 +110,18 @@ func createNat(ev *Event) error {
 	ev.NatGatewayAllocationID = *resp.AllocationId
 	ev.NatGatewayAllocationIP = *resp.PublicIp
 
+	// Create Internet Gateway
+	ev.InternetGatewayID, err = createInternetGateway(svc, ev.DatacenterVPCID)
+	if err != nil {
+		return err
+	}
+
 	// Create Nat Gateway
 	req := ec2.CreateNatGatewayInput{
 		AllocationId: aws.String(ev.NatGatewayAllocationID),
 		SubnetId:     aws.String(ev.NetworkAWSID),
 	}
+
 	gwresp, err := svc.CreateNatGateway(&req)
 	if err != nil {
 		return err
