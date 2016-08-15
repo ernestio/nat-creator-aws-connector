@@ -45,7 +45,7 @@ func eventHandler(m *nats.Msg) {
 func internetGatewayByVPCID(svc *ec2.EC2, id string) (*ec2.InternetGateway, error) {
 	f := []*ec2.Filter{
 		&ec2.Filter{
-			Name:   aws.String("vcp-id"),
+			Name:   aws.String("attachment.vpc-id"),
 			Values: []*string{aws.String(id)},
 		},
 	}
