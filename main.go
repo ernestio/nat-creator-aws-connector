@@ -200,6 +200,15 @@ func createNat(ev *Event) error {
 
 	ev.NatGatewayAWSID = *gwresp.NatGateway.NatGatewayId
 
+	waitnat := ec2.DescribeNatGatewaysInput{
+		NatGatewayIds: []*string{gwresp.NatGateway.NatGatewayId},
+	}
+
+	err = svc.WaitUntilNatGatewayAvailable(&waitnat)
+	if err != nil {
+		return err
+	}
+
 	rt, err := createRouteTable(svc, ev.DatacenterVPCID, ev.NetworkAWSID)
 	if err != nil {
 		return err
