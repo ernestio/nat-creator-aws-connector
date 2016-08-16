@@ -147,7 +147,7 @@ func createRouteTable(svc *ec2.EC2, vpc, subnet string) (*ec2.RouteTable, error)
 		return nil, err
 	}
 
-	return rt, nil
+	return resp.RouteTable, nil
 }
 
 func createNatGatewayRoutes(svc *ec2.EC2, rt *ec2.RouteTable, gw *ec2.NatGateway) error {
