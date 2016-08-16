@@ -42,11 +42,11 @@ func eventHandler(m *nats.Msg) {
 	n.Complete()
 }
 
-func internetGatewayByVPCID(svc *ec2.EC2, id string) (*ec2.InternetGateway, error) {
+func internetGatewayByVPCID(svc *ec2.EC2, vpc string) (*ec2.InternetGateway, error) {
 	f := []*ec2.Filter{
 		&ec2.Filter{
 			Name:   aws.String("attachment.vpc-id"),
-			Values: []*string{aws.String(id)},
+			Values: []*string{aws.String(vpc)},
 		},
 	}
 
@@ -66,8 +66,32 @@ func internetGatewayByVPCID(svc *ec2.EC2, id string) (*ec2.InternetGateway, erro
 	return resp.InternetGateways[0], nil
 }
 
-func createInternetGateway(svc *ec2.EC2, id string) (string, error) {
-	ig, err := internetGatewayByVPCID(svc, id)
+func routingTableBySubnetID(svc *ec2.EC2, subnet string) (*ec2.RouteTable, error) {
+	f := []*ec2.Filter{
+		&ec2.Filter{
+			Name:   aws.String("association.subnet-id"),
+			Values: []*string{aws.String(subnet)},
+		},
+	}
+
+	req := ec2.DescribeRouteTablesInput{
+		Filters: f,
+	}
+
+	resp, err := svc.DescribeRouteTables(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.RouteTables) == 0 {
+		return nil, nil
+	}
+
+	return resp.RouteTables[0], nil
+}
+
+func createInternetGateway(svc *ec2.EC2, vpc string) (string, error) {
+	ig, err := internetGatewayByVPCID(svc, vpc)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +107,7 @@ func createInternetGateway(svc *ec2.EC2, id string) (string, error) {
 
 	req := ec2.AttachInternetGatewayInput{
 		InternetGatewayId: resp.InternetGateway.InternetGatewayId,
-		VpcId:             aws.String(id),
+		VpcId:             aws.String(vpc),
 	}
 
 	_, err = svc.AttachInternetGateway(&req)
@@ -92,6 +116,53 @@ func createInternetGateway(svc *ec2.EC2, id string) (string, error) {
 	}
 
 	return *resp.InternetGateway.InternetGatewayId, nil
+}
+
+func createRouteTable(svc *ec2.EC2, vpc, subnet string) (*ec2.RouteTable, error) {
+	rt, err := routingTableBySubnetID(svc, subnet)
+	if err != nil {
+		return nil, err
+	}
+
+	if rt != nil {
+		return rt, nil
+	}
+
+	req := ec2.CreateRouteTableInput{
+		VpcId: aws.String(vpc),
+	}
+
+	resp, err := svc.CreateRouteTable(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	acreq := ec2.AssociateRouteTableInput{
+		RouteTableId: resp.RouteTable.RouteTableId,
+		SubnetId:     aws.String(subnet),
+	}
+
+	_, err = svc.AssociateRouteTable(&acreq)
+	if err != nil {
+		return nil, err
+	}
+
+	return rt, nil
+}
+
+func createNatGatewayRoutes(svc *ec2.EC2, rt *ec2.RouteTable, gw *ec2.NatGateway) error {
+	req := ec2.CreateRouteInput{
+		RouteTableId:         rt.RouteTableId,
+		DestinationCidrBlock: aws.String("0.0.0.0/0"),
+		NatGatewayId:         gw.NatGatewayId,
+	}
+
+	_, err := svc.CreateRoute(&req)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createNat(ev *Event) error {
@@ -128,6 +199,16 @@ func createNat(ev *Event) error {
 	}
 
 	ev.NatGatewayAWSID = *gwresp.NatGateway.NatGatewayId
+
+	rt, err := createRouteTable(svc, ev.DatacenterVPCID, ev.NetworkAWSID)
+	if err != nil {
+		return err
+	}
+
+	err = createNatGatewayRoutes(svc, rt, gwresp.NatGateway)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
