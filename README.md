@@ -4,8 +4,8 @@ Service to create aws nats, it responds to *nat.create.aws* and will respond wit
 
 ## Build status
 
-* master: [![CircleCI](https://circleci.com/gh/r3labs/nat-creator-aws-connector/tree/master.svg?style=svg)](https://circleci.com/gh/r3labs/nat-creator-aws-connector/tree/master)
-* develop: [![CircleCI](https://circleci.com/gh/ErnestIO/nat-creator-aws-connector/tree/develop.svg?style=svg)](https://circleci.com/gh/r3labs/nat-creator-aws-connector/tree/develop)
+* master: [![CircleCI](https://circleci.com/gh/ErnestIO/nat-creator-aws-connector/tree/master.svg?style=svg)](https://circleci.com/gh/ErnestIO/nat-creator-aws-connector/tree/master)
+* develop: [![CircleCI](https://circleci.com/gh/ErnestIO/nat-creator-aws-connector/tree/develop.svg?style=svg)](https://circleci.com/gh/ErnestIO/nat-creator-aws-connector/tree/develop)
 
 ## Installation
 
