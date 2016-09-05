@@ -190,7 +190,7 @@ func createNat(ev *Event) error {
 	// Create Nat Gateway
 	req := ec2.CreateNatGatewayInput{
 		AllocationId: aws.String(ev.NatGatewayAllocationID),
-		SubnetId:     aws.String(ev.NetworkAWSID),
+		SubnetId:     aws.String(ev.PublicNetworkAWSID),
 	}
 
 	gwresp, err := svc.CreateNatGateway(&req)
@@ -209,14 +209,16 @@ func createNat(ev *Event) error {
 		return err
 	}
 
-	rt, err := createRouteTable(svc, ev.DatacenterVPCID, ev.NetworkAWSID)
-	if err != nil {
-		return err
-	}
+	for _, networkID := range ev.RoutedNetworkAWSIDs {
+		rt, err := createRouteTable(svc, ev.DatacenterVPCID, networkID)
+		if err != nil {
+			return err
+		}
 
-	err = createNatGatewayRoutes(svc, rt, gwresp.NatGateway)
-	if err != nil {
-		return err
+		err = createNatGatewayRoutes(svc, rt, gwresp.NatGateway)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
