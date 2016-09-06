@@ -15,23 +15,27 @@ var (
 	ErrDatacenterRegionInvalid      = errors.New("Datacenter Region invalid")
 	ErrDatacenterCredentialsInvalid = errors.New("Datacenter credentials invalid")
 	ErrNetworkIDInvalid             = errors.New("Network id invalid")
+	ErrRoutedNetworksEmpty          = errors.New("Routed networks are empty")
 )
 
 // Event stores the nat data
 type Event struct {
-	UUID                   string `json:"_uuid"`
-	BatchID                string `json:"_batch_id"`
-	ProviderType           string `json:"_type"`
-	DatacenterVPCID        string `json:"datacenter_vpc_id"`
-	DatacenterRegion       string `json:"datacenter_region"`
-	DatacenterAccessKey    string `json:"datacenter_access_key"`
-	DatacenterAccessToken  string `json:"datacenter_access_token"`
-	NetworkAWSID           string `json:"network_aws_id"`
-	NatGatewayAWSID        string `json:"nat_gateway_aws_id"`
-	NatGatewayAllocationID string `json:"nat_gateway_allocation_id"`
-	NatGatewayAllocationIP string `json:"nat_gateway_allocation_ip"`
-	InternetGatewayID      string `json:"internet_gateway_id"`
-	ErrorMessage           string `json:"error,omitempty"`
+	UUID                   string   `json:"_uuid"`
+	BatchID                string   `json:"_batch_id"`
+	ProviderType           string   `json:"_type"`
+	DatacenterVPCID        string   `json:"datacenter_vpc_id"`
+	DatacenterRegion       string   `json:"datacenter_region"`
+	DatacenterAccessKey    string   `json:"datacenter_access_key"`
+	DatacenterAccessToken  string   `json:"datacenter_access_token"`
+	PublicNetwork          string   `json:"public_network"`
+	PublicNetworkAWSID     string   `json:"public_network_aws_id"`
+	RoutedNetworks         []string `json:"routed_networks"`
+	RoutedNetworkAWSIDs    []string `json:"routed_networks_aws_ids"`
+	NatGatewayAWSID        string   `json:"nat_gateway_aws_id"`
+	NatGatewayAllocationID string   `json:"nat_gateway_allocation_id"`
+	NatGatewayAllocationIP string   `json:"nat_gateway_allocation_ip"`
+	InternetGatewayID      string   `json:"internet_gateway_id"`
+	ErrorMessage           string   `json:"error,omitempty"`
 }
 
 // Validate checks if all criteria are met
@@ -48,8 +52,12 @@ func (ev *Event) Validate() error {
 		return ErrDatacenterCredentialsInvalid
 	}
 
-	if ev.NetworkAWSID == "" {
+	if ev.PublicNetworkAWSID == "" {
 		return ErrNetworkIDInvalid
+	}
+
+	if len(ev.RoutedNetworkAWSIDs) < 1 {
+		return ErrRoutedNetworksEmpty
 	}
 
 	return nil

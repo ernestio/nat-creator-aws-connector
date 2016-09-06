@@ -28,7 +28,8 @@ var (
 		DatacenterRegion:      "eu-west-1",
 		DatacenterAccessKey:   "key",
 		DatacenterAccessToken: "token",
-		NetworkAWSID:          "subnet-00000000",
+		PublicNetworkAWSID:    "subnet-00000000",
+		RoutedNetworkAWSIDs:   []string{"subnet-00000001"},
 	}
 )
 
@@ -78,7 +79,9 @@ func TestEvent(t *testing.T) {
 					So(e.DatacenterRegion, ShouldEqual, "eu-west-1")
 					So(e.DatacenterAccessKey, ShouldEqual, "key")
 					So(e.DatacenterAccessToken, ShouldEqual, "token")
-					So(e.NetworkAWSID, ShouldEqual, "subnet-00000000")
+					So(e.PublicNetworkAWSID, ShouldEqual, "subnet-00000000")
+					So(len(e.RoutedNetworkAWSIDs), ShouldEqual, 1)
+					So(e.RoutedNetworkAWSIDs[0], ShouldEqual, "subnet-00000001")
 				})
 			})
 
@@ -194,7 +197,7 @@ func TestEvent(t *testing.T) {
 
 		Convey("With no network id", func() {
 			testEventInvalid := testEvent
-			testEventInvalid.NetworkAWSID = ""
+			testEventInvalid.PublicNetworkAWSID = ""
 			invalid, _ := json.Marshal(testEventInvalid)
 
 			Convey("When validating the event", func() {
@@ -204,6 +207,22 @@ func TestEvent(t *testing.T) {
 				Convey("It should error", func() {
 					So(err, ShouldNotBeNil)
 					So(err.Error(), ShouldEqual, "Network id invalid")
+				})
+			})
+		})
+
+		Convey("With no routed network id's", func() {
+			testEventInvalid := testEvent
+			testEventInvalid.RoutedNetworkAWSIDs = []string{}
+			invalid, _ := json.Marshal(testEventInvalid)
+
+			Convey("When validating the event", func() {
+				var e Event
+				e.Process(invalid)
+				err := e.Validate()
+				Convey("It should error", func() {
+					So(err, ShouldNotBeNil)
+					So(err.Error(), ShouldEqual, "Routed networks are empty")
 				})
 			})
 		})
