@@ -23,10 +23,10 @@ type Event struct {
 	UUID                   string   `json:"_uuid"`
 	BatchID                string   `json:"_batch_id"`
 	ProviderType           string   `json:"_type"`
-	VPCID        string   `json:"vpc_id"`
+	VPCID                  string   `json:"vpc_id"`
 	DatacenterRegion       string   `json:"datacenter_region"`
-	DatacenterAccessKey    string   `json:"datacenter_access_key"`
-	DatacenterAccessToken  string   `json:"datacenter_access_token"`
+	DatacenterAccessKey    string   `json:"datacenter_secret"`
+	DatacenterAccessToken  string   `json:"datacenter_token"`
 	PublicNetwork          string   `json:"public_network"`
 	PublicNetworkAWSID     string   `json:"public_network_aws_id"`
 	RoutedNetworks         []string `json:"routed_networks"`
