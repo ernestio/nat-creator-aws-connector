@@ -182,7 +182,7 @@ func createNat(ev *Event) error {
 	ev.NatGatewayAllocationIP = *resp.PublicIp
 
 	// Create Internet Gateway
-	ev.InternetGatewayID, err = createInternetGateway(svc, ev.DatacenterVPCID)
+	ev.InternetGatewayID, err = createInternetGateway(svc, ev.VPCID)
 	if err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func createNat(ev *Event) error {
 	}
 
 	for _, networkID := range ev.RoutedNetworkAWSIDs {
-		rt, err := createRouteTable(svc, ev.DatacenterVPCID, networkID)
+		rt, err := createRouteTable(svc, ev.VPCID, networkID)
 		if err != nil {
 			return err
 		}
