@@ -35,7 +35,7 @@ type Event struct {
 	NatGatewayAllocationID string   `json:"nat_gateway_allocation_id"`
 	NatGatewayAllocationIP string   `json:"nat_gateway_allocation_ip"`
 	InternetGatewayID      string   `json:"internet_gateway_id"`
-	ErrorMessage           string   `json:"error,omitempty"`
+	ErrorMessage           string   `json:"error_message,omitempty"`
 }
 
 // Validate checks if all criteria are met
